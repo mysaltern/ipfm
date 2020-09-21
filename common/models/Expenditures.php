@@ -187,4 +187,17 @@ class Expenditures extends \yii\db\ActiveRecord {
         return $rows;
     }
 
+    public static function reportMonthly($userID) {
+
+        $expenditures = [];
+
+        for ($x = 0; $x <= 11; $x++) {
+            $information = Yii::$app->Calculate->dateWithNumber($x);
+            $expenditures[$x]['sum'] = \common\models\Expenditures::find()->where(['userID' => $userID])->andWhere(['between', 'date', $information['start'], $information['end']])->sum('amount');
+            $expenditures[$x]['name'] = $information['name'];
+        }
+
+        return $expenditures;
+    }
+
 }

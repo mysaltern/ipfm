@@ -2,23 +2,11 @@
 
 namespace frontend\controllers;
 
-use common\models\ExpendituresCategory;
 use Yii;
-use hoomanMirghasemi\jdf\Jdf;
 
-class ExpenditurescategoryController extends \yii\web\Controller {
+class ReportController extends \yii\web\Controller {
 
     public function actionIndex() {
-        \Yii::$app->response->format = \yii\web\Response:: FORMAT_JSON;
-        $expendituresCategory = ExpendituresCategory::find()->all();
-        if (count($expendituresCategory) > 0) {
-            return array('status' => true, 'data' => $expendituresCategory);
-        } else {
-            return array('status' => false, 'data' => 'No expenditures Category Found');
-        }
-    }
-
-    public function actionReport() {
         \Yii::$app->response->format = \yii\web\Response:: FORMAT_JSON;
         $userID = Yii::$app->Proccess->userID(isset($_GET['user_id']) ? $_GET['user_id'] : null);
         if ($userID == false) {

@@ -73,6 +73,10 @@ class Income extends \yii\db\ActiveRecord {
         return $this->hasMany(Expenditures::className(), ['incomeID' => 'id']);
     }
 
+    public function getCategory() {
+        return $this->hasOne(IncomeCategory::className(), ['id' => 'categoryID']);
+    }
+
     /**
      * Gets query for [[Khoms]].
      *
