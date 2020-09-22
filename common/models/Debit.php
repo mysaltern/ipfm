@@ -96,7 +96,12 @@ class Debit extends \yii\db\ActiveRecord {
 
         for ($x = 0; $x <= 11; $x++) {
             $information = Yii::$app->Calculate->dateWithNumber($x);
-            $debit[$x]['sum'] = \common\models\Debit::find()->where(['userID' => $userID])->andWhere(['between', 'date', $information['start'], $information['end']])->sum('amount');
+            $sum = \common\models\Debit::find()->where(['userID' => $userID])->andWhere(['between', 'date', $information['start'], $information['end']])->sum('amount');
+
+
+
+
+            $debit[$x]['sum'] = (int) $sum;
             $debit[$x]['name'] = $information['name'];
         }
 

@@ -31,10 +31,14 @@ class IncomeController extends \yii\web\Controller {
         if ($userID == false) {
             return array('status' => false, 'data' => 'User id connot be blank');
         }
+        if (isset($_GET['type']) == false) {
+            return array('status' => false, 'data' => 'type connot be blank');
+        }
         $income = Income::find()
-                ->select([ 'income.id', 'name', 'income_category.title as category_name', 'income_category.id as category_id', 'amount', 'date'])
+                ->select([ 'income.id', 'khomsID', 'name', 'income_category.title as category_name', 'income_category.id as category_id', 'amount', 'date'])
                 ->join('INNER JOIN', 'income_category', 'income_category.id=income.categoryID')
                 ->where(['userID' => $userID])
+                ->andWhere(['type' => (int) $_GET['type']])
                 ->asArray()
                 ->all();
 

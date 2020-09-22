@@ -31,7 +31,7 @@ class Income extends \yii\db\ActiveRecord {
 
     public function scenarios() {
         $scenarios = parent::scenarios();
-        $scenarios['create'] = ['amount', 'name', 'date', 'khomsID', 'userID'];
+        $scenarios['create'] = ['amount', 'categoryID', 'name', 'date', 'khomsID', 'userID'];
         return $scenarios;
     }
 
@@ -130,7 +130,10 @@ class Income extends \yii\db\ActiveRecord {
 
         for ($x = 0; $x <= 11; $x++) {
             $information = Yii::$app->Calculate->dateWithNumber($x);
-            $income[$x]['sum'] = \common\models\Income::find()->where(['userID' => $userID])->andWhere(['between', 'date', $information['start'], $information['end']])->sum('amount');
+            $sum = (int) \common\models\Income::find()->where(['userID' => $userID])->andWhere(['between', 'date', $information['start'], $information['end']])->sum('amount');
+
+
+            $income[$x]['sum'] = $sum;
             $income[$x]['name'] = $information['name'];
         }
 

@@ -193,7 +193,9 @@ class Expenditures extends \yii\db\ActiveRecord {
 
         for ($x = 0; $x <= 11; $x++) {
             $information = Yii::$app->Calculate->dateWithNumber($x);
-            $expenditures[$x]['sum'] = \common\models\Expenditures::find()->where(['userID' => $userID])->andWhere(['between', 'date', $information['start'], $information['end']])->sum('amount');
+            $sum = \common\models\Expenditures::find()->where(['userID' => $userID])->andWhere(['between', 'date', $information['start'], $information['end']])->sum('amount');
+
+            $expenditures[$x]['sum'] = (int) $sum;
             $expenditures[$x]['name'] = $information['name'];
         }
 
