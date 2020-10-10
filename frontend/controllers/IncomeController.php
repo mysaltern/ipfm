@@ -13,6 +13,7 @@ class IncomeController extends \yii\web\Controller {
 
         Yii::$app->response->format = \yii\web\Response:: FORMAT_JSON;
 
+
         $income = new Income();
 
         $income->scenario = Income:: SCENARIO_CREATE;
@@ -38,13 +39,18 @@ class IncomeController extends \yii\web\Controller {
                 ->select([ 'income.id', 'khomsID', 'name', 'income_category.title as category_name', 'income_category.id as category_id', 'amount', 'date'])
                 ->join('INNER JOIN', 'income_category', 'income_category.id=income.categoryID')
                 ->where(['userID' => $userID])
-                ->andWhere(['type' => (int) $_GET['type']])
-                ->asArray()
+                ->andWhere(['income_category.type' => (int) $_GET['type']]);
+
+        if (isset($_GET['categoryID'])) {
+            $income = $income->andWhere(['categoryID' => $_GET['categoryID']]);
+        }
+        $income = $income->orderBy('income.id desc')->asArray()
                 ->all();
 
+        $sum = \common\models\Income::sum($userID, false, false, 'notPayed', (int) $_GET['type'], false);
 
         if (count($income) > 0) {
-            return array('status' => true, 'data' => $income);
+            return array('status' => true, 'data' => $income, 'sum' => $sum);
         } else {
             return array('status' => false, 'data' => 'No income Found');
         }

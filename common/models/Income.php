@@ -17,6 +17,7 @@ use Yii;
  * @property Expenditures[] $expenditures
  * @property PayKhoms $khoms
  * @property User $user
+ * @property int|null $type 
  */
 class Income extends \yii\db\ActiveRecord {
 
@@ -43,7 +44,7 @@ class Income extends \yii\db\ActiveRecord {
             [['name', 'amount'], 'required'],
             [['date', 'userID'], 'integer'],
             [['name', 'amount'], 'string', 'max' => 255],
-            [['amount', 'date', 'khomsID', 'categoryID', 'userID'], 'integer'],
+            [['amount', 'type', 'date', 'khomsID', 'categoryID', 'userID'], 'integer'],
             [['khomsID'], 'exist', 'skipOnError' => true, 'targetClass' => PayKhoms::className(), 'targetAttribute' => ['khomsID' => 'id']],
             [['userID'], 'exist', 'skipOnError' => true, 'targetClass' => User::className(), 'targetAttribute' => ['userID' => 'id']],
             [['categoryID'], 'exist', 'skipOnError' => true, 'targetClass' => IncomeCategory::className(), 'targetAttribute' => ['categoryID' => 'id']],
@@ -60,6 +61,7 @@ class Income extends \yii\db\ActiveRecord {
             'date' => 'Date',
             'khomsID' => 'Khoms ID',
             'userID' => 'User ID',
+            'type' => 'Type',
             'categoryID' => 'Category ID',
         ];
     }
@@ -103,23 +105,54 @@ class Income extends \yii\db\ActiveRecord {
         return new IncomeQuery(get_called_class());
     }
 
-    public static function sum($userID, $startDate = false, $endDate = false, $allOrNot = false) {
+    public static function sum($userID, $startDate = false, $endDate = false, $allOrNot = false, $type = false, $category = false) {
 
-//all income
+
+
+        $data = Income::find()->select('sum(amount) as price');
+        $data = $data->where(['userID' => 1, 'income.type' => 0]);
+        if ($type !== false) {
+            $data = $data->leftJoin('income_category', 'income_category.id = income.categoryID')->andWhere(['income_category.type' => $type]);
+        }
         if ($allOrNot === true) {
-            $sum = Income::find()->select('sum(amount)')->where(['userID' => $userID])->asArray()->one();
-            return $sum;
+            
         }
-        //all  payed khoms income
+        //        //all  payed khoms income
         elseif ($allOrNot == false) {
-            $sum = Income::find()->select('sum(amount)')->where(['userID' => $userID])->andWhere(['not', ['khomsID' => null]])->asArray()->one();
+            $data = $data->andWhere(['not', ['khomsID' => null]]);
             return $sum;
         }
-        //all not payed khoms income
+        //        //all not payed khoms income
         else {
-            $sum = Income::find()->select('sum(amount)')->where(['userID' => $userID])->andWhere(['khomsID' => null])->asArray()->one();
-            return $sum;
+            $data = $data->andWhere(['khomsID' => null]);
         }
+        $data = $data->asArray()->one();
+        $data = $data['price'];
+
+        return $data;
+////all income
+//        if ($allOrNot === true) {
+//            $sum = Income::find()->select('sum(amount)')->where(['userID' => $userID])->asArray()->one();
+//            return $sum;
+//        }
+//
+//        if ($type != false) {
+//            
+//        }
+//
+//        if ($category != false) {
+//            
+//        }
+//        //all  payed khoms income
+//        elseif ($allOrNot == false) {
+//            $sum = Income::find()->select('sum(amount)')->where(['userID' => $userID])->andWhere(['not', ['khomsID' => null]])->asArray()->one();
+//            return $sum;
+//        }
+//        //all not payed khoms income
+//        else {
+//            $sum = Income::find()->select('sum(amount)')->where(['userID' => $userID])->andWhere(['khomsID' => null])->asArray()->one();
+//            return $sum;
+//        }
     }
 
     public static function reportMonthly($userID) {

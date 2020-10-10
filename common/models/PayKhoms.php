@@ -18,32 +18,38 @@ use Yii;
  * @property Income[] $incomes
  * @property User $user
  */
-class PayKhoms extends \yii\db\ActiveRecord
-{
+class PayKhoms extends \yii\db\ActiveRecord {
+
+    const SCENARIO_CREATE = 'create';
+
     /**
      * {@inheritdoc}
      */
-    public static function tableName()
-    {
+    public static function tableName() {
         return 'pay_khoms';
     }
 
     /**
      * {@inheritdoc}
      */
-    public function rules()
-    {
+    public function rules() {
         return [
             [['date', 'user_id', 'amount', 'active', 'deleted'], 'integer'],
+            [['user_id', 'amount'], 'required'],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::className(), 'targetAttribute' => ['user_id' => 'id']],
         ];
+    }
+
+    public function scenarios() {
+        $scenarios = parent::scenarios();
+        $scenarios['create'] = ['date', 'user_id', 'amount', 'active', 'deleted'];
+        return $scenarios;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function attributeLabels()
-    {
+    public function attributeLabels() {
         return [
             'id' => 'ID',
             'date' => 'Date',
@@ -59,8 +65,7 @@ class PayKhoms extends \yii\db\ActiveRecord
      *
      * @return \yii\db\ActiveQuery|ExpendituresQuery
      */
-    public function getExpenditures()
-    {
+    public function getExpenditures() {
         return $this->hasMany(Expenditures::className(), ['khoms_payedID' => 'id']);
     }
 
@@ -69,8 +74,7 @@ class PayKhoms extends \yii\db\ActiveRecord
      *
      * @return \yii\db\ActiveQuery|IncomeQuery
      */
-    public function getIncomes()
-    {
+    public function getIncomes() {
         return $this->hasMany(Income::className(), ['khomsID' => 'id']);
     }
 
@@ -79,8 +83,7 @@ class PayKhoms extends \yii\db\ActiveRecord
      *
      * @return \yii\db\ActiveQuery|yii\db\ActiveQuery
      */
-    public function getUser()
-    {
+    public function getUser() {
         return $this->hasOne(User::className(), ['id' => 'user_id']);
     }
 
@@ -88,8 +91,8 @@ class PayKhoms extends \yii\db\ActiveRecord
      * {@inheritdoc}
      * @return PayKhomsQuery the active query used by this AR class.
      */
-    public static function find()
-    {
+    public static function find() {
         return new PayKhomsQuery(get_called_class());
     }
+
 }

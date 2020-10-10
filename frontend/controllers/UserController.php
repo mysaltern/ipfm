@@ -13,11 +13,12 @@ class UserController extends \yii\web\Controller {
         if (isset($_GET['user_id'])) {
             if (is_numeric($_GET['user_id'])) {
 
-                $user_id = User::find()->select(['id', 'username', 'email', 'name', 'date_khoms', 'leadership_legalID'])->where(['id' => $_GET['user_id']])->leftJoin('profile', '`user`.`id` = `profile`.`user_id`')->one();
+                $user_id = User::find()->select(['user.id', 'leadership_details.name as leader_law', 'leadership.name as leader_name', 'username', 'email', 'profile.name', 'last_clear_khoms', 'date_khoms', 'leadership_legalID'])->where(['user.id' => $_GET['user_id']])->leftJoin('profile', '`user`.`id` = `profile`.`user_id`')->leftJoin('leadership_details', '`leadership_details`.`id` = `profile`.`leadership_legalID`')
+                                ->leftJoin('leadership', '`leadership_details`.`leadershipID` = `leadership`.`id`')
+                                ->asArray()->one();
 
-                var_dump($user_id);
-                die;
-                if (count($user_id) > 0) {
+
+                if (is_array($user_id) and count($user_id) > 0) {
                     return array('status' => true, 'data' => $user_id);
                 }
             }

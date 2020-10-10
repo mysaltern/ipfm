@@ -54,7 +54,8 @@ class Expenditures extends \yii\db\ActiveRecord {
 
     public function scenarios() {
         $scenarios = parent::scenarios();
-        $scenarios['create'] = ['amount', 'expendituresCategoryID', 'userID', 'incomeID'];
+
+        $scenarios['create'] = ['amount', 'expendituresCategoryID', 'userID', 'date', 'name', 'incomeID', 'debitID'];
         return $scenarios;
     }
 
@@ -132,18 +133,18 @@ class Expenditures extends \yii\db\ActiveRecord {
 
 //all income
         if ($allOrNot === true) {
-            $sum = Income::find()->select('sum(amount)')->where(['userID' => $userID])->asArray()->one();
-            return $sum;
+            $sum = Expenditures::find()->select('sum(amount) as price')->where(['userID' => $userID])->asArray()->one();
+            return $sum['price'];
         }
         //all  payed khoms income
         elseif ($allOrNot == false) {
-            $sum = Income::find()->select('sum(amount)')->where(['userID' => $userID])->andWhere(['not', ['khomsID' => null]])->asArray()->one();
-            return $sum;
+            $sum = Expenditures::find()->select('sum(amount)  as price')->where(['userID' => $userID])->andWhere(['not', ['khoms_payedID' => null]])->asArray()->one();
+            return $sum['price'];
         }
         //all not payed khoms income
         else {
-            $sum = Income::find()->select('sum(amount)')->where(['userID' => $userID])->andWhere(['khomsID' => null])->asArray()->one();
-            return $sum;
+            $sum = Expenditures::find()->select('sum(amount)  as price')->where(['userID' => $userID])->andWhere(['khoms_payedID' => null])->asArray()->one();
+            return $sum['price'];
         }
     }
 

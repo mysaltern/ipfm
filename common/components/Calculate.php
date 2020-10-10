@@ -65,4 +65,27 @@ class Calculate extends Component {
         return $date;
     }
 
+    public function khomsStatic($amount) {
+        $result = (int) $amount / 5;
+        return $result;
+    }
+
+    public function khoms($income, $asset, $debit, $expenditures) {
+        $khoms = Yii::$app->Calculate->khomsStatic($asset);
+
+        $sum = $khoms + $income - $expenditures - $debit;
+        return $sum;
+    }
+
+    public function completeField($userID) {
+
+        $data = [];
+        $data['asset'] = \common\models\Income::sum($userID, false, false, 'notPayed', 2, false);
+        $data['income'] = \common\models\Income::sum($userID, false, false, 'notPayed', 1, false);
+        $data['expenditures'] = \common\models\Expenditures::sum($userID, false, false, 'notPayed');
+        $data['debit'] = \common\models\Debit::sum($userID, FALSE, FALSE);
+        $data['religion'] = Yii::$app->Calculate->khomsStatic($data['income'], $data['asset'], $data['debit'], $data['expenditures']);
+        return $data;
+    }
+
 }

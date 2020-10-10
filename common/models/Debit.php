@@ -86,8 +86,8 @@ class Debit extends \yii\db\ActiveRecord {
 
     public static function sum($userID, $startDate = false, $endDate = false) {
 
-        $sum = Debit::find()->select('sum(amount)')->where(['userID' => $userID])->asArray()->one();
-        return $sum;
+        $sum = Debit::find()->select('sum(amount) as price')->where(['userID' => $userID])->asArray()->one();
+        return $sum['price'];
     }
 
     public static function reportMonthly($userID) {
