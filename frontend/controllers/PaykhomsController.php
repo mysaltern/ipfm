@@ -4,10 +4,34 @@ namespace frontend\controllers;
 
 use Yii;
 use common\models\PayKhoms;
+use hoomanMirghasemi\jdf\Jdf;
 
 class PaykhomsController extends \yii\web\Controller {
 
     public $enableCsrfValidation = false;
+
+    public static function allowedDomains() {
+        return [
+            // '*',                        // star allows all domains
+            Yii::$app->params['frontendURL']
+        ];
+    }
+
+    public function behaviors() {
+        return array_merge(parent::behaviors(), [
+            // For cross-domain AJAX request
+            'corsFilter' => [
+                'class' => \yii\filters\Cors::className(),
+                'cors' => [
+                    // restrict access to domains:
+                    'Origin' => static::allowedDomains(),
+                    'Access-Control-Request-Method' => ['POST', 'GET'],
+                    'Access-Control-Allow-Credentials' => true,
+                    'Access-Control-Max-Age' => 3600, // Cache (seconds)
+                ],
+            ],
+        ]);
+    }
 
     public function actionIndex() {
 
@@ -18,11 +42,17 @@ class PaykhomsController extends \yii\web\Controller {
             return array('status' => false, 'data' => 'User id connot be blank');
         }
         $data = \common\models\PayKhoms::find()
-                ->select([ 'pay_khoms.id', 'date', 'amount'])
+                ->select(['pay_khoms.id', 'date', 'amount'])
                 //    ->join('INNER JOIN', 'income_category', 'income_category.id=income.categoryID')
                 ->where(['user_id' => $userID, 'active' => 1, 'deleted' => 0]);
         //     ->andWhere(['type' => (int) $_GET['type']]);
         $data = $data->asArray()->all();
+        $newArray = array();
+        foreach ($data as $column) {
+            $column['date'] = Jdf::jdate('Y/n/j', $column['date']);
+            $newArray[] = $column;
+        }
+        $data = $newArray;
         $khoms = Yii::$app->Calculate->completeField($userID);
 
         if (count($khoms) > 0) {
@@ -53,6 +83,10 @@ class PaykhomsController extends \yii\web\Controller {
 //            $income->save(false);
             Yii::$app->db->createCommand()
                     ->update('income', ['khomsID' => $pay->id], "userID= $pay->user_id")
+                    ->execute();
+
+            Yii::$app->db->createCommand()
+                    ->update('expenditures', ['khoms_payedID' => $pay->id], "userID= $pay->user_id")
                     ->execute();
             return array('status' => true, 'data' => 'Income record is successfully Saved');
         } else {

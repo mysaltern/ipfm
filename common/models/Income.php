@@ -8,43 +8,58 @@ use Yii;
  * This is the model class for table "income".
  *
  * @property int $id
- * @property int $amount
+ * @property string $name
+ * @property string|null $description
+ * @property string|null $amount
+ * @property string|null $amount_sell
  * @property int|null $date
  * @property int|null $khomsID
  * @property int|null $userID
+ * @property int|null $categoryID
+ * @property int|null $type
+ * @property int $sell
+ * @property int|null $date_income
+ * @property int|null $date_outcome
  *
- * @property int|null $categoryID 
  * @property Expenditures[] $expenditures
  * @property PayKhoms $khoms
  * @property User $user
- * @property int|null $type 
+ * @property IncomeCategory $category
  */
-class Income extends \yii\db\ActiveRecord {
+class Income extends \yii\db\ActiveRecord
+{
 
     const SCENARIO_CREATE = 'create';
+    const SCENARIO_SELL = 'sell';
 
     /**
      * {@inheritdoc}
      */
-    public static function tableName() {
+    public static function tableName()
+    {
         return 'income';
     }
 
-    public function scenarios() {
+    public function scenarios()
+    {
         $scenarios = parent::scenarios();
-        $scenarios['create'] = ['amount', 'categoryID', 'name', 'date', 'khomsID', 'userID'];
+        $scenarios['create'] = ['amount', 'categoryID', 'description', 'name', 'date', 'khomsID', 'userID'];
+        $scenarios['sell'] = ['id', 'amount_sell', 'userID'];
         return $scenarios;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function rules() {
+    public function rules()
+    {
         return [
-            [['name', 'amount'], 'required'],
-            [['date', 'userID'], 'integer'],
-            [['name', 'amount'], 'string', 'max' => 255],
-            [['amount', 'type', 'date', 'khomsID', 'categoryID', 'userID'], 'integer'],
+            [['name'], 'required'],
+            [['khomsID', 'userID', 'categoryID', 'type', 'sell', 'date_income', 'date_outcome'], 'integer'],
+            [['name'], 'string', 'max' => 255],
+            [['description'], 'string', 'max' => 250],
+            [['amount', 'date'], 'string', 'max' => 25],
+            [['amount_sell'], 'string', 'max' => 40],
             [['khomsID'], 'exist', 'skipOnError' => true, 'targetClass' => PayKhoms::className(), 'targetAttribute' => ['khomsID' => 'id']],
             [['userID'], 'exist', 'skipOnError' => true, 'targetClass' => User::className(), 'targetAttribute' => ['userID' => 'id']],
             [['categoryID'], 'exist', 'skipOnError' => true, 'targetClass' => IncomeCategory::className(), 'targetAttribute' => ['categoryID' => 'id']],
@@ -54,12 +69,14 @@ class Income extends \yii\db\ActiveRecord {
     /**
      * {@inheritdoc}
      */
-    public function attributeLabels() {
+    public function attributeLabels()
+    {
         return [
             'id' => 'ID',
             'amount' => 'Amount',
             'date' => 'Date',
             'khomsID' => 'Khoms ID',
+            'description' => 'description',
             'userID' => 'User ID',
             'type' => 'Type',
             'categoryID' => 'Category ID',
@@ -71,11 +88,13 @@ class Income extends \yii\db\ActiveRecord {
      *
      * @return \yii\db\ActiveQuery|ExpendituresQuery
      */
-    public function getExpenditures() {
+    public function getExpenditures()
+    {
         return $this->hasMany(Expenditures::className(), ['incomeID' => 'id']);
     }
 
-    public function getCategory() {
+    public function getCategory()
+    {
         return $this->hasOne(IncomeCategory::className(), ['id' => 'categoryID']);
     }
 
@@ -84,7 +103,8 @@ class Income extends \yii\db\ActiveRecord {
      *
      * @return \yii\db\ActiveQuery|PayKhomsQuery
      */
-    public function getKhoms() {
+    public function getKhoms()
+    {
         return $this->hasOne(PayKhoms::className(), ['id' => 'khomsID']);
     }
 
@@ -93,7 +113,8 @@ class Income extends \yii\db\ActiveRecord {
      *
      * @return \yii\db\ActiveQuery|yii\db\ActiveQuery
      */
-    public function getUser() {
+    public function getUser()
+    {
         return $this->hasOne(User::className(), ['id' => 'userID']);
     }
 
@@ -101,33 +122,40 @@ class Income extends \yii\db\ActiveRecord {
      * {@inheritdoc}
      * @return IncomeQuery the active query used by this AR class.
      */
-    public static function find() {
+    public static function find()
+    {
         return new IncomeQuery(get_called_class());
     }
 
-    public static function sum($userID, $startDate = false, $endDate = false, $allOrNot = false, $type = false, $category = false) {
+    public static function sum($userID, $startDate = false, $endDate = false, $allOrNot = false, $type = false, $category = false, $sell)
+    {
 
 
 
         $data = Income::find()->select('sum(amount) as price');
-        $data = $data->where(['userID' => 1, 'income.type' => 0]);
-        if ($type !== false) {
+        $data = $data->where(['userID' => 1, 'income.type' => $type, 'sell' => $sell]);
+        if ($type !== false)
+        {
             $data = $data->leftJoin('income_category', 'income_category.id = income.categoryID')->andWhere(['income_category.type' => $type]);
         }
-        if ($allOrNot === true) {
-            
+        if ($allOrNot === true)
+        {
+
         }
         //        //all  payed khoms income
-        elseif ($allOrNot == false) {
+        elseif ($allOrNot == false)
+        {
             $data = $data->andWhere(['not', ['khomsID' => null]]);
-            return $sum;
+//            return $sum;
         }
         //        //all not payed khoms income
-        else {
+        else
+        {
             $data = $data->andWhere(['khomsID' => null]);
         }
         $data = $data->asArray()->one();
-        $data = $data['price'];
+
+        $data = (int) $data['price'];
 
         return $data;
 ////all income
@@ -137,11 +165,11 @@ class Income extends \yii\db\ActiveRecord {
 //        }
 //
 //        if ($type != false) {
-//            
+//
 //        }
 //
 //        if ($category != false) {
-//            
+//
 //        }
 //        //all  payed khoms income
 //        elseif ($allOrNot == false) {
@@ -155,24 +183,40 @@ class Income extends \yii\db\ActiveRecord {
 //        }
     }
 
-    public static function reportMonthly($userID) {
+    public static function reportMonthly($userID, $type)
+    {
 
 
 
         $income = [];
 
-        for ($x = 0; $x <= 11; $x++) {
+        for ($x = 0; $x <= 11; $x++)
+        {
             $information = Yii::$app->Calculate->dateWithNumber($x);
-            $sum = (int) \common\models\Income::find()->where(['userID' => $userID])->andWhere(['between', 'date', $information['start'], $information['end']])->sum('amount');
+            $sum = (int) \common\models\Income::find()->where(['userID' => $userID, 'type' => $type, 'sell' => 0])->andWhere(['between', 'date', $information['start'], $information['end']])->sum('amount');
 
 
             $income[$x]['sum'] = $sum;
             $income[$x]['name'] = $information['name'];
         }
 
+        $income = array_reverse($income);
 
 
         return $income;
+    }
+
+    public static function getIdWithCat($cat, $userID)
+    {
+        $incomeId = Income::find('id')->where(['userID' => $userID, 'categoryID' => $cat])->asArray()->one();
+        if (isset($incomeId))
+        {
+            return $incomeId['id'];
+        }
+        else
+        {
+            return false;
+        }
     }
 
 }

@@ -16,18 +16,21 @@ use Yii;
  * @property User $user
  * @property Expenditures[] $expenditures
  */
-class Debit extends \yii\db\ActiveRecord {
+class Debit extends \yii\db\ActiveRecord
+{
 
     const SCENARIO_CREATE = 'create';
 
     /**
      * {@inheritdoc}
      */
-    public static function tableName() {
+    public static function tableName()
+    {
         return 'debit';
     }
 
-    public function scenarios() {
+    public function scenarios()
+    {
         $scenarios = parent::scenarios();
         $scenarios['create'] = ['amount', 'name', 'date', 'khomsID', 'userID'];
         return $scenarios;
@@ -36,7 +39,8 @@ class Debit extends \yii\db\ActiveRecord {
     /**
      * {@inheritdoc}
      */
-    public function rules() {
+    public function rules()
+    {
         return [
             [['name', 'amount'], 'required'],
             [['date', 'userID'], 'integer'],
@@ -48,7 +52,8 @@ class Debit extends \yii\db\ActiveRecord {
     /**
      * {@inheritdoc}
      */
-    public function attributeLabels() {
+    public function attributeLabels()
+    {
         return [
             'id' => 'ID',
             'name' => 'Name',
@@ -63,7 +68,8 @@ class Debit extends \yii\db\ActiveRecord {
      *
      * @return \yii\db\ActiveQuery|yii\db\ActiveQuery
      */
-    public function getUser() {
+    public function getUser()
+    {
         return $this->hasOne(User::className(), ['id' => 'userID']);
     }
 
@@ -72,7 +78,8 @@ class Debit extends \yii\db\ActiveRecord {
      *
      * @return \yii\db\ActiveQuery|ExpendituresQuery
      */
-    public function getExpenditures() {
+    public function getExpenditures()
+    {
         return $this->hasMany(Expenditures::className(), ['debitID' => 'id']);
     }
 
@@ -80,21 +87,25 @@ class Debit extends \yii\db\ActiveRecord {
      * {@inheritdoc}
      * @return DebitQuery the active query used by this AR class.
      */
-    public static function find() {
+    public static function find()
+    {
         return new DebitQuery(get_called_class());
     }
 
-    public static function sum($userID, $startDate = false, $endDate = false) {
+    public static function sum($userID, $startDate = false, $endDate = false)
+    {
 
         $sum = Debit::find()->select('sum(amount) as price')->where(['userID' => $userID])->asArray()->one();
-        return $sum['price'];
+        return (int) $sum['price'];
     }
 
-    public static function reportMonthly($userID) {
+    public static function reportMonthly($userID)
+    {
 
         $debit = [];
 
-        for ($x = 0; $x <= 11; $x++) {
+        for ($x = 0; $x <= 11; $x++)
+        {
             $information = Yii::$app->Calculate->dateWithNumber($x);
             $sum = \common\models\Debit::find()->where(['userID' => $userID])->andWhere(['between', 'date', $information['start'], $information['end']])->sum('amount');
 
@@ -104,6 +115,7 @@ class Debit extends \yii\db\ActiveRecord {
             $debit[$x]['sum'] = (int) $sum;
             $debit[$x]['name'] = $information['name'];
         }
+        $debit = array_reverse($debit);
 
         return $debit;
     }

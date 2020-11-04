@@ -9,6 +9,30 @@ class ExpendituresController extends \yii\web\Controller {
 
     public $enableCsrfValidation = false;
 
+    public static function allowedDomains() {
+        return [
+            // '*',                        // star allows all domains
+            Yii::$app->params['frontendURL']
+        ];
+    }
+
+    public function behaviors() {
+        return array_merge(parent::behaviors(), [
+
+            // For cross-domain AJAX request
+            'corsFilter' => [
+                'class' => \yii\filters\Cors::className(),
+                'cors' => [
+                    // restrict access to domains:
+                    'Origin' => static::allowedDomains(),
+                    'Access-Control-Request-Method' => ['POST', 'GET'],
+                    'Access-Control-Allow-Credentials' => true,
+                    'Access-Control-Max-Age' => 3600, // Cache (seconds)
+                ],
+            ],
+        ]);
+    }
+
     public function actionCreate() {
 
         Yii::$app->response->format = \yii\web\Response:: FORMAT_JSON;
@@ -17,8 +41,17 @@ class ExpendituresController extends \yii\web\Controller {
 
         $expenditures->scenario = Expenditures:: SCENARIO_CREATE;
         $expenditures->attributes = \yii::$app->request->post();
+
+
         if ($expenditures->validate()) {
-            $expenditures->save();
+
+            $date = $expenditures->date;
+
+            $timestamp = strtotime(str_replace('/', '-', $date));
+
+
+            $expenditures->date = $timestamp;
+            $expenditures->save(false);
             return array('status' => true, 'data' => 'expenditure record is successfully Saved');
         } else {
             return array('status' => false, 'data' => $expenditures->getErrors());
@@ -43,7 +76,8 @@ class ExpendituresController extends \yii\web\Controller {
                 ->join('LEFT JOIN', 'income', 'expenditures.incomeID=income.id')
                 ->join('LEFT JOIN', 'debit', 'expenditures.debitID=expenditures.id')
                 ->where(['expenditures.userID' => $userID])
-                ->andWhere(['active' => 1]);
+                ->andWhere(['active' => 1])
+                ->orderBy('expenditures.id desc');
 
         if (isset($category_id)) {
             $data = $expenditures->andWhere(['expenditures_category.id' => $category_id]);
@@ -52,6 +86,15 @@ class ExpendituresController extends \yii\web\Controller {
         //         ->groupBy('expenditures.expendituresCategoryID')
         $data = $expenditures->asArray()->all();
 
+        if (count($data) > 0) {
+            $sum = 0;
+            foreach ($data as $item) {
+                $sum += $item['amount'];
+            }
+            return array('status' => true, 'data' => $data, 'sum' => $sum);
+        } else {
+            return array('status' => false, 'data' => 'No expenditures Found');
+        }
         return $data;
     }
 

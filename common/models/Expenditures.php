@@ -14,7 +14,7 @@ use yii\db\Query;
  * @property int|null $date
  * @property int|null $userID
  * @property int|null $khoms_payedID
- * @property string|null $name 
+ * @property string|null $name
  * @property int|null $active
  * @property int|null $incomeID
  * @property int|null $debitID
@@ -29,6 +29,8 @@ class Expenditures extends \yii\db\ActiveRecord {
 
     const SCENARIO_CREATE = 'create';
 
+    public $incomeCategoryID = null;
+
     /**
      * {@inheritdoc}
      */
@@ -41,9 +43,10 @@ class Expenditures extends \yii\db\ActiveRecord {
      */
     public function rules() {
         return [
-            [['amount', 'expendituresCategoryID'], 'required'],
-            [['name'], 'string', 'max' => 255],
-            [['amount', 'expendituresCategoryID', 'date', 'userID', 'khoms_payedID', 'active', 'incomeID', 'debitID'], 'integer'],
+            [['expendituresCategoryID'], 'required'],
+            [['incomeID', 'debitID', 'incomeCategoryID'], \common\components\EitherValidator::className()],
+            [['name', 'amount', 'date'], 'string', 'max' => 255],
+            [['amount', 'expendituresCategoryID', 'userID', 'khoms_payedID', 'active', 'incomeID', 'debitID'], 'integer'],
             [['userID'], 'exist', 'skipOnError' => true, 'targetClass' => User::className(), 'targetAttribute' => ['userID' => 'id']],
             [['expendituresCategoryID'], 'exist', 'skipOnError' => true, 'targetClass' => ExpendituresCategory::className(), 'targetAttribute' => ['expendituresCategoryID' => 'id']],
             [['khoms_payedID'], 'exist', 'skipOnError' => true, 'targetClass' => PayKhoms::className(), 'targetAttribute' => ['khoms_payedID' => 'id']],
@@ -55,7 +58,7 @@ class Expenditures extends \yii\db\ActiveRecord {
     public function scenarios() {
         $scenarios = parent::scenarios();
 
-        $scenarios['create'] = ['amount', 'expendituresCategoryID', 'userID', 'date', 'name', 'incomeID', 'debitID'];
+        $scenarios['create'] = ['amount', 'expendituresCategoryID', 'userID', 'date', 'name', 'incomeID', 'incomeCategoryID', 'debitID'];
         return $scenarios;
     }
 
@@ -134,17 +137,17 @@ class Expenditures extends \yii\db\ActiveRecord {
 //all income
         if ($allOrNot === true) {
             $sum = Expenditures::find()->select('sum(amount) as price')->where(['userID' => $userID])->asArray()->one();
-            return $sum['price'];
+            return (int) $sum['price'];
         }
         //all  payed khoms income
         elseif ($allOrNot == false) {
             $sum = Expenditures::find()->select('sum(amount)  as price')->where(['userID' => $userID])->andWhere(['not', ['khoms_payedID' => null]])->asArray()->one();
-            return $sum['price'];
+            return (int) $sum['price'];
         }
         //all not payed khoms income
         else {
             $sum = Expenditures::find()->select('sum(amount)  as price')->where(['userID' => $userID])->andWhere(['khoms_payedID' => null])->asArray()->one();
-            return $sum['price'];
+            return (int) $sum['price'];
         }
     }
 
@@ -199,6 +202,9 @@ class Expenditures extends \yii\db\ActiveRecord {
             $expenditures[$x]['sum'] = (int) $sum;
             $expenditures[$x]['name'] = $information['name'];
         }
+
+        $expenditures = array_reverse($expenditures);
+
 
         return $expenditures;
     }
